@@ -12,12 +12,13 @@ DIGIT_FONT = ("Arial", 25)
 OPERATOR_FONT = ("Arial", 25)
 CLEAR_FONT = ("Arial", 20)
 SPECIAL_FONT = ("Arial", 18)
+DEFAULT_COLOUR = "gray90"
 
 global button_size
 button_size = int((WIDTH - BUTTON_GAP * 5) / 4)
-
 ck.set_appearance_mode("dark")
 ck.set_default_color_theme("blue")
+
 
 class Calculator:
     def __init__(self):
@@ -41,34 +42,35 @@ class Calculator:
 
 
     def display(self):
-        self.entry = ck.CTkEntry(self.root, placeholder_text=0, placeholder_text_color="white", justify="right", 
+        self.entry = ck.CTkEntry(self.root, placeholder_text="0", placeholder_text_color=DEFAULT_COLOUR, justify="right", 
                                  width=WIDTH-BUTTON_GAP*2, height=100, text_font=DISPLAY_FONT)
         self.entry.grid(row=0, column=0, columnspan=4, padx=(BUTTON_GAP, 0), pady=10)
 
 
     def clear_display(self):
         self.entry.delete(0, tk.END)
+        self.number = ""
+        self.equation = ""
 
 
     def update_display(self, digit):
-        self.clear_display()
-        self.number = str(self.entry.get()) + str(digit)
+        self.number += str(digit)
+       
+        # Delete leading zero if it is the first digit entered
+        if self.number[0] == "0" and len(self.number) > 1 and "." not in self.number:
+            self.number = str(digit)
+            self.entry.insert(0, self.number)
 
         # Only allow 1 decimal point
         if self.number.count(".") > 1:
             self.number = self.number[:-1]
 
         # Add a zero to leading decimal point
-        elif len(self.entry.get()) == 0 and str(digit) == ".":
-            self.number = self.number[:-1]
-            self.entry.insert(0, "0.")
-
-        # Delete leading zero if it is the first digit entered
-        elif len(self.entry.get()) == 1 and self.number[0] == "0" and "." not in self.number:
-            self.clear_display()
-            self.entry.insert(0, self.number[1:])
+        elif len(self.number) == 1 and str(digit) == ".":
+            self.number = "0."
+            self.entry.insert(0, self.number)
         else:
-            self.clear_display()
+            self.entry.delete(0, tk.END)
             self.entry.insert(0, self.number)
 
 
@@ -79,15 +81,20 @@ class Calculator:
         else:
             # Replace existing operator with the most recent operator
             self.equation = self.equation[:-1] + operator
-        self.clear_display()
+        self.entry.delete(0, tk.END)
         self.number = ""
 
-        # Calculate final answer
+        # Calculate final answer and remove floating point from integers
         if operator != "=":
             self.equation = str(eval(self.equation[:-1])) + operator
+            if self.equation[-3:-1] == ".0":
+                self.equation = self.equation.replace(".0", "")            
             self.entry.insert(0, self.equation[:-1])
         else:
-            self.entry.insert(0, eval(self.equation[:-1]))
+            self.equation = str(eval(self.equation[:-1]))
+            if self.equation[:-2] == ".0":
+                self.equation = self.equation.replace(".0", "")            
+            self.entry.insert(0, self.equation)
             self.equation = ""
 
 
