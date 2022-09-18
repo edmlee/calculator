@@ -51,6 +51,7 @@ class Calculator:
 
 
     def update_display(self, digit):
+        self.clear_display()
         self.number = str(self.entry.get()) + str(digit)
 
         # Only allow 1 decimal point
@@ -73,17 +74,20 @@ class Calculator:
 
     def calculate(self, operator):
         self.equation += self.number
-        if self.equation[-1] not in list(self.operators.values())[:-1]:
+        if self.equation[-1] not in list(self.operators.keys())[:-1]:
             self.equation += operator
         else:
+            # Replace existing operator with the most recent operator
             self.equation = self.equation[:-1] + operator
         self.clear_display()
         self.number = ""
-        print(self.equation)
 
-        if operator == "=":
+        # Calculate final answer
+        if operator != "=":
+            self.equation = str(eval(self.equation[:-1])) + operator
+            self.entry.insert(0, self.equation[:-1])
+        else:
             self.entry.insert(0, eval(self.equation[:-1]))
-            print(eval(self.equation[:-1]))
             self.equation = ""
 
 
