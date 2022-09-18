@@ -28,12 +28,14 @@ class Calculator:
         self.number_buttons = {}
         self.operators = {"/":"\u00F7","*":"\u00D7", "-":"\u2212", "+":"+", "=":"="}
         self.bottom_buttons = [0, "."]
+        self.number = ""
+        self.equation = ""
             
         self.display()
         self.digit_position()
         self.create_operator_button()
         self.create_clear_button()
-        self.backspace_button()
+        self.create_backspace_button()
         self.create_percentage_button()
         self.create_plus_minus_button()
 
@@ -44,6 +46,10 @@ class Calculator:
         self.entry.grid(row=0, column=0, columnspan=4, padx=(BUTTON_GAP, 0), pady=10)
 
 
+    def clear_display(self):
+        self.entry.delete(0, tk.END)
+
+
     def update_display(self, digit):
         self.number = str(self.entry.get()) + str(digit)
 
@@ -52,12 +58,33 @@ class Calculator:
             self.number = self.number[:-1]
 
         # Add a zero to leading decimal point
-        if len(str(self.entry.get())) == 0 and str(digit) == ".":
+        elif len(self.entry.get()) == 0 and str(digit) == ".":
             self.number = self.number[:-1]
             self.entry.insert(0, "0.")
+
+        # Delete leading zero if it is the first digit entered
+        elif len(self.entry.get()) == 1 and self.number[0] == "0" and "." not in self.number:
+            self.clear_display()
+            self.entry.insert(0, self.number[1:])
         else:
-            self.entry.delete(0, tk.END)
+            self.clear_display()
             self.entry.insert(0, self.number)
+
+
+    def calculate(self, operator):
+        self.equation += self.number
+        if self.equation[-1] not in list(self.operators.values())[:-1]:
+            self.equation += operator
+        else:
+            self.equation = self.equation[:-1] + operator
+        self.clear_display()
+        self.number = ""
+        print(self.equation)
+
+        if operator == "=":
+            self.entry.insert(0, eval(self.equation[:-1]))
+            print(eval(self.equation[:-1]))
+            self.equation = ""
 
 
     def digit_position(self):
@@ -92,13 +119,10 @@ class Calculator:
         count_x = 1
         for operator, value in self.operators.items():
             operator_button[operator] = ck.CTkButton(self.root, text=f"{value}", width=button_size, height=button_size, 
-                                                     corner_radius=BUTTON_CORNER_RADIUS, text_font=OPERATOR_FONT)
+                                                     corner_radius=BUTTON_CORNER_RADIUS, text_font=OPERATOR_FONT, 
+                                                     command=lambda operator=operator: self.calculate(operator))
             operator_button[operator].grid(row=count_x, column=3, padx=(BUTTON_GAP, 0), pady=(BUTTON_GAP, 0))
             count_x += 1
-
-
-    def clear_display(self):
-        self.entry.delete(0, tk.END)
 
 
     def create_clear_button(self):
@@ -112,7 +136,7 @@ class Calculator:
         self.number = self.number[:-1]
 
 
-    def backspace_button(self):
+    def create_backspace_button(self):
         button = ck.CTkButton(self.root, text=f"\u232b", width=button_size, height=button_size, 
                               corner_radius=BUTTON_CORNER_RADIUS, text_font=SPECIAL_FONT, command=self.backspace_display)
         button.grid(row=5, column=0, padx=(BUTTON_GAP, 0), pady=(BUTTON_GAP, 0))
@@ -128,10 +152,6 @@ class Calculator:
         button = ck.CTkButton(self.root, text=f"\u00B1", width=button_size, height=button_size, 
                               corner_radius=BUTTON_CORNER_RADIUS, text_font=SPECIAL_FONT, command=self.backspace_display)
         button.grid(row=1, column=2, padx=(BUTTON_GAP, 0), pady=(BUTTON_GAP, 0))
-
-
-    def calculate(self):
-        pass
 
 
 if __name__ == "__main__":
