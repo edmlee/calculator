@@ -1,4 +1,3 @@
-from decimal import DivisionByZero
 import tkinter as tk
 import customtkinter as ck
 
@@ -27,8 +26,6 @@ class Calculator:
         self.root.title("Calculator")
         self.root.geometry(f"{WIDTH}x{HEIGHT}")
 
-        self.number_buttons = {}
-        self.operator_buttons = {}
         self.operators = {"/":"\u00F7","*":"\u00D7", "-":"\u2212", "+":"+", "=":"="}
         self.bottom_buttons = [0, "."]
         self.number = ""
@@ -36,11 +33,8 @@ class Calculator:
             
         self.display()
         self.digit_position()
-        self.create_operator_button()
-        self.create_clear_button()
-        self.create_backspace_button()
-        self.create_fraction_button()
-        self.create_plus_minus_button()
+        self.create_operator_buttons()
+        self.create_special_buttons()
 
 
     def display(self):
@@ -130,37 +124,38 @@ class Calculator:
 
 
     def create_digit_button(self, digit_row, digit_column, digit):
-        self.number_buttons[digit] = ck.CTkButton(self.root, text=f"{digit}", width=button_size, height=button_size, 
-                                                  corner_radius=BUTTON_CORNER_RADIUS, text_font=DIGIT_FONT, 
-                                                  command=lambda digit=digit: self.update_display(digit))
-        self.number_buttons[digit].grid(row=digit_row, column=digit_column, padx=(BUTTON_GAP, 0), pady=(BUTTON_GAP, 0))        
+        button = ck.CTkButton(self.root, text=f"{digit}", width=button_size, height=button_size, 
+                              corner_radius=BUTTON_CORNER_RADIUS, text_font=DIGIT_FONT, 
+                              command=lambda digit=digit: self.update_display(digit))
+        button.grid(row=digit_row, column=digit_column, padx=(BUTTON_GAP, 0), pady=(BUTTON_GAP, 0))        
 
 
-    def create_operator_button(self):
+    def create_operator_buttons(self):
         count_x = 1
         for operator, value in self.operators.items():
-            self.operator_buttons[operator] = ck.CTkButton(self.root, text=f"{value}", width=button_size, height=button_size, 
-                                                     corner_radius=BUTTON_CORNER_RADIUS, text_font=OPERATOR_FONT, 
-                                                     command=lambda operator=operator: self.calculate(operator))
-            self.operator_buttons[operator].grid(row=count_x, column=3, padx=(BUTTON_GAP, 0), pady=(BUTTON_GAP, 0))
+            button = ck.CTkButton(self.root, text=f"{value}", width=button_size, height=button_size, 
+                                 corner_radius=BUTTON_CORNER_RADIUS, text_font=OPERATOR_FONT, 
+                                 command=lambda operator=operator: self.calculate(operator))
+            button.grid(row=count_x, column=3, padx=(BUTTON_GAP, 0), pady=(BUTTON_GAP, 0))
             count_x += 1
 
 
-    def create_clear_button(self):
-        button = ck.CTkButton(self.root, text=f"C", width=button_size, height=button_size, 
-                              corner_radius=BUTTON_CORNER_RADIUS, text_font=CLEAR_FONT, command=self.clear_display)
-        button.grid(row=1, column=0, padx=(BUTTON_GAP, 0), pady=(BUTTON_GAP, 0))
+    def create_button(self, text, row, column, command):
+        button = ck.CTkButton(self.root, text=text, width=button_size, height=button_size, 
+                              corner_radius=BUTTON_CORNER_RADIUS, text_font=SPECIAL_FONT, command=command)
+        button.grid(row=row, column=column, padx=(BUTTON_GAP, 0), pady=(BUTTON_GAP, 0))
+
+    
+    def create_special_buttons(self):
+        self.create_button(text="C", row=1, column=0, command=self.clear_display)
+        self.create_button(text=f"\u232b", row=5, column=0, command=self.backspace_display)
+        self.create_button(text=f"\u00b9\u2044\u2093", row=1, column=1, command=self.fraction)
+        self.create_button(text=f"\u00B1", row=1, column=2, command=self.plus_minus)
 
 
     def backspace_display(self):
         self.entry.delete(len(self.number) - 1, tk.END)
         self.number = self.number[:-1]
-
-
-    def create_backspace_button(self):
-        button = ck.CTkButton(self.root, text=f"\u232b", width=button_size, height=button_size, 
-                              corner_radius=BUTTON_CORNER_RADIUS, text_font=SPECIAL_FONT, command=self.backspace_display)
-        button.grid(row=5, column=0, padx=(BUTTON_GAP, 0), pady=(BUTTON_GAP, 0))
 
 
     def fraction(self):
@@ -177,26 +172,13 @@ class Calculator:
             self.entry.insert(0, "Error")
 
 
-    def create_fraction_button(self):
-        button = ck.CTkButton(self.root, text=f"\u00b9\u2044\u2093", width=button_size, height=button_size, 
-                              corner_radius=BUTTON_CORNER_RADIUS, text_font=SPECIAL_FONT, command=self.fraction)
-        button.grid(row=1, column=1, padx=(BUTTON_GAP, 0), pady=(BUTTON_GAP, 0))
-
-
     def plus_minus(self):
         self.number = self.entry.get()
         if len(self.number) != 0:
             self.number = float(self.number)* -1
             self.number = self.remove_floating_point(self.number)
-            self.number = str(self.number)
             self.entry.delete(0, tk.END)
             self.entry.insert(0, self.number)
-
-
-    def create_plus_minus_button(self):
-        button = ck.CTkButton(self.root, text=f"\u00B1", width=button_size, height=button_size, 
-                              corner_radius=BUTTON_CORNER_RADIUS, text_font=SPECIAL_FONT, command=self.plus_minus)
-        button.grid(row=1, column=2, padx=(BUTTON_GAP, 0), pady=(BUTTON_GAP, 0))
 
 
     def remove_floating_point(self, number):
