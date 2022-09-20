@@ -26,7 +26,7 @@ class Calculator:
         self.root.title("Calculator")
         self.root.geometry(f"{WIDTH}x{HEIGHT}")
 
-        self.operators = {"/":"\u00F7","*":"\u00D7", "-":"\u2212", "+":"+", "=":"="}
+        self.operators_list = {"/":"\u00F7","*":"\u00D7", "-":"\u2212", "+":"+"}
         self.bottom_buttons = [0, "."]
         self.number = ""
         self.equation = ""
@@ -73,34 +73,39 @@ class Calculator:
     def calculate(self, operator):
         self.equation += self.number
         try:
-            if len(self.equation) != 0:
-                if self.equation[-1] not in list(self.operators.keys())[:-1]:
+            if len(self.number) != 0:
+                if self.equation[-1] not in list(self.operators_list.keys())[:-1]:
                     self.equation += operator
                 else:
                     # Replace existing operator with the most recent operator
                     self.equation = self.equation[:-1] + operator
                 self.entry.delete(0, tk.END)
+                self.equation = str(eval(self.equation[:-1])) + operator
+
+                # Remove floating point from integers
+                if self.equation[-3:-1] == ".0":
+                    self.equation = self.equation.replace(".0", "")            
+                self.entry.insert(0, self.equation[:-1])
                 self.number = ""
-
-                # Calculate final answer and remove floating point from integers
-                if operator != "=":
-                    self.equation = str(eval(self.equation[:-1])) + operator
-                    if self.equation[-3:-1] == ".0":
-                        self.equation = self.equation.replace(".0", "")            
-                    self.entry.insert(0, self.equation[:-1])
-
-                else:
-                    self.equation = str(eval(self.equation[:-1]))
-                    self.equation = self.remove_floating_point(self.equation)       
-                    self.entry.insert(0, self.equation)
-                    self.equation = ""
-            # Reset display
-            elif len(self.equation) == 0 and operator == "=":
-                self.entry.delete(0, tk.END)
-                self.entry.insert(0, "0")
         except ZeroDivisionError:
-            self.entry.delete(0, tk.END)
-            self.entry.insert(0, "Error")
+            self.error()
+
+
+    def equals(self):
+        try:
+            if len(self.equation) != 0:
+                self.equation += self.number
+                if not self.equation[-1].isdigit():
+                    self.equation = self.equation[-1]
+                else:
+                    self.equation = str(eval(self.equation))
+                    self.equation = self.remove_floating_point(self.equation)
+                self.entry.delete(0, tk.END)    
+                self.entry.insert(0, self.equation)
+                self.number = ""
+                self.equation = ""
+        except ZeroDivisionError:
+            self.error()
 
 
     def digit_position(self):
@@ -113,44 +118,40 @@ class Calculator:
                 digit_row += 1
                 digit_column = 2
             
-            self.create_digit_button(digit_row, digit_column, digit)
+            self.create_button(text=f"{digit}", row=digit_row, column=digit_column, font=DIGIT_FONT, 
+                               command=lambda digit=digit: self.update_display(digit))
             digit_column -= 1
 
         # Digit 0 and the decimal point
         digit_column = 1
         for digit in self.bottom_buttons:
-            self.create_digit_button(5, digit_column, digit)
-            digit_column += 1      
+            self.create_button(text=f"{digit}", row=5, column=digit_column, font=DIGIT_FONT, 
+                               command=lambda digit=digit: self.update_display(digit))
+            digit_column += 1        
 
 
-    def create_digit_button(self, digit_row, digit_column, digit):
-        button = ck.CTkButton(self.root, text=f"{digit}", width=button_size, height=button_size, 
-                              corner_radius=BUTTON_CORNER_RADIUS, text_font=DIGIT_FONT, 
-                              command=lambda digit=digit: self.update_display(digit))
-        button.grid(row=digit_row, column=digit_column, padx=(BUTTON_GAP, 0), pady=(BUTTON_GAP, 0))        
+    def create_button(self, text, row, column, font, command):
+        button = ck.CTkButton(self.root, text=text, width=button_size, height=button_size, 
+                              corner_radius=BUTTON_CORNER_RADIUS, text_font=font, command=command)
+        button.grid(row=row, column=column, padx=(BUTTON_GAP, 0), pady=(BUTTON_GAP, 0))
 
 
     def create_operator_buttons(self):
         count_x = 1
-        for operator, value in self.operators.items():
+        for operator, value in self.operators_list.items():
             button = ck.CTkButton(self.root, text=f"{value}", width=button_size, height=button_size, 
                                  corner_radius=BUTTON_CORNER_RADIUS, text_font=OPERATOR_FONT, 
                                  command=lambda operator=operator: self.calculate(operator))
             button.grid(row=count_x, column=3, padx=(BUTTON_GAP, 0), pady=(BUTTON_GAP, 0))
             count_x += 1
 
-
-    def create_button(self, text, row, column, command):
-        button = ck.CTkButton(self.root, text=text, width=button_size, height=button_size, 
-                              corner_radius=BUTTON_CORNER_RADIUS, text_font=SPECIAL_FONT, command=command)
-        button.grid(row=row, column=column, padx=(BUTTON_GAP, 0), pady=(BUTTON_GAP, 0))
-
     
     def create_special_buttons(self):
-        self.create_button(text="C", row=1, column=0, command=self.clear_display)
-        self.create_button(text=f"\u232b", row=5, column=0, command=self.backspace_display)
-        self.create_button(text=f"\u00b9\u2044\u2093", row=1, column=1, command=self.fraction)
-        self.create_button(text=f"\u00B1", row=1, column=2, command=self.plus_minus)
+        self.create_button(text="=", row=5, column=3,font=SPECIAL_FONT, command=self.equals)
+        self.create_button(text="C", row=1, column=0, font=SPECIAL_FONT, command=self.clear_display)
+        self.create_button(text=f"\u232b", row=5, column=0, font=SPECIAL_FONT, command=self.backspace_display)
+        self.create_button(text=f"\u00b9\u2044\u2093", row=1, font=SPECIAL_FONT, column=1, command=self.fraction)
+        self.create_button(text=f"\u00B1", row=1, column=2, font=SPECIAL_FONT, command=self.plus_minus)
 
 
     def backspace_display(self):
@@ -168,8 +169,7 @@ class Calculator:
                 self.entry.insert(0, self.number)
                 self.number = ""
         except ZeroDivisionError:
-            self.entry.delete(0, tk.END)
-            self.entry.insert(0, "Error")
+            self.error()
 
 
     def plus_minus(self):
@@ -189,6 +189,14 @@ class Calculator:
         return number
 
 
+    def error(self):
+        self.number = ""
+        self.equation = ""
+        self.entry.delete(0, tk.END)
+        self.entry.insert(0, "Error")
+
+
 if __name__ == "__main__":
     calculator = Calculator()
     calculator.root.mainloop()
+    

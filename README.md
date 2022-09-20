@@ -1,2 +1,2 @@
-# calculator
-Basic Calculator GUI
+# Basic Calculator GUI
+![alt text](calculator_gui.png)
